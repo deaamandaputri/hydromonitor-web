@@ -713,12 +713,9 @@
                                     <svg width="21" height="21" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.4 15.4a2 2 0 0 0-1-.5l-2.4-.5a6 6 0 0 0-3.8.5l-.4.2a6 6 0 0 1-3.8.5l-1.9-.4a2 2 0 0 0-1.8.5M8 4h8l-1 1v5.2a2 2 0 0 0 .6 1.4l5 5A2 2 0 0 1 19.2 20H4.8a2 2 0 0 1-1.4-3.4l5-5A2 2 0 0 0 9 10.2V5L8 4Z"/></svg>
                                 </div>
                             </div>
-                            <div class="value" style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-                                <div>
-                                    <strong id="turbidity-val">0.00</strong>
-                                    <span>Volt</span>
-                                </div>
-                                <span class="quality-badge" id="clarity-status-val" style="font-size: 0.75rem; padding: 4px 10px;">Menganalisa</span>
+                            <div class="value" style="margin-bottom: 8px;">
+                                <strong id="clarity-status-val" style="font-size: 1.5rem; font-weight: 800; color: var(--green); display: block; line-height: 1.2;">Air Sangat Jernih</strong>
+                                <span style="font-size: 0.7rem; color: var(--muted); font-weight: 500; margin-top: 4px; display: block; opacity: 0.6;">(Tegangan Sensor: <span id="turbidity-val">0.00</span> Volt)</span>
                             </div>
                         </div>
                         <span class="quality-badge" id="water-status-val" style="display: block; width: 100%; white-space: normal; line-height: 1.4;">Menganalisa</span>
@@ -770,18 +767,9 @@
         }
 
         function animateNumber(element, from, to, duration = 500, decimals = 0) {
-            const start = performance.now();
-            const step = (time) => {
-                const progress = Math.min((time - start) / duration, 1);
-                const eased = 1 - Math.pow(1 - progress, 3);
-                const value = from + (to - from) * eased;
-                element.textContent = value.toFixed(decimals);
-
-                if (progress < 1) {
-                    requestAnimationFrame(step);
-                }
-            };
-            requestAnimationFrame(step);
+            if (element) {
+                element.textContent = to.toFixed(decimals);
+            }
         }
 
         function setQualityBadge(text, voltage) {
@@ -809,26 +797,23 @@
 
             const clarityBadge = document.getElementById('clarity-status-val');
             let clarityColor = '#16835f';
-            let clarityBg = '#effaf5';
-            let clarityBorder = '#cdeee0';
             let clarityText = 'Air Bersih';
 
-            if (voltage >= 1.61) {
+            if (voltage >= 2.00) {
                 clarityColor = '#16835f';
-                clarityBg = '#effaf5';
-                clarityBorder = '#cdeee0';
+                clarityText = 'Air Sangat Jernih';
+            } else if (voltage >= 1.61) {
+                clarityColor = '#16835f';
                 clarityText = 'Air Bersih';
             } else {
                 clarityColor = '#b42323';
-                clarityBg = '#fff1f1';
-                clarityBorder = '#ffd1d1';
                 clarityText = 'Air Keruh';
             }
 
-            clarityBadge.textContent = clarityText;
-            clarityBadge.style.color = clarityColor;
-            clarityBadge.style.background = clarityBg;
-            clarityBadge.style.borderColor = clarityBorder;
+            if (clarityBadge) {
+                clarityBadge.textContent = clarityText;
+                clarityBadge.style.color = clarityColor;
+            }
         }
 
         function setPumpState(state) {
@@ -910,8 +895,8 @@
 
             document.getElementById('total-litres-val').textContent = `${total.toFixed(3)} L`;
 
-            if (previous.turbidity !== turbidity) {
-                animateNumber(document.getElementById('turbidity-val'), previous.turbidity, turbidity, 550, 2);
+            if (Math.abs(previous.turbidity - turbidity) >= 0.03 || previous.turbidity === 0) {
+                document.getElementById('turbidity-val').textContent = turbidity.toFixed(2);
                 previous.turbidity = turbidity;
             }
 

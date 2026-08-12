@@ -46,4 +46,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relasi ke data sensor (One-to-Many)
+     */
+    public function sensorData()
+    {
+        return $this->hasMany(SensorData::class);
+    }
 }

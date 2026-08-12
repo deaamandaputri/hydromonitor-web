@@ -59,6 +59,7 @@ class MqttListenCommand extends Command
                 if ($data && is_array($data)) {
                     // Masukkan (create) seluruh data sensor yang didapat ke dalam database tabel 'sensor_data'
                     SensorData::create([
+                        'user_id' => $data['user_id'] ?? 1,
                         'proximity' => $data['proximity'] ?? null,
                         'water_level_cm' => $data['water_level_cm'] ?? null,
                         'water_level_percent' => $data['water_level_percent'] ?? null,
@@ -78,19 +79,23 @@ class MqttListenCommand extends Command
                     // Menggunakan Cache memori agar peringatan tidak dikirim berulang kali (Spamming)
                     // ==============================================================================
                     $proximity = $data['proximity'] ?? null;
+                    $waterStatus = $data['water_status'] ?? '';
+
                     if ($proximity !== null) {
                         // Mengambil status peringatan terakhir dari memori sistem (Cache), bawaannya 'normal'
                         $lastState = Cache::get('telegram_tank_state', 'normal');
                         $currentState = $lastState;
                         
                         // Menentukan status tangki saat ini berdasarkan jarak air (Proximity)
-                        if ($proximity <= 4.0) {
-                            $currentState = 'full';  // Jarak terlalu dekat = Tangki Penuh
-                        } elseif ($proximity > 8.0 && $proximity <= 20.0) {
-                            $currentState = 'empty'; // Jarak mulai menjauh = Tangki Kekurangan Air
+                        if ($proximity <= 4.5 || str_contains($waterStatus, 'Penuh')) {
+                            $currentState = 'full';    // Jarak <= 4.5 cm atau status Penuh = Tangki Penuh
+                        } elseif ($proximity > 8.0) {
+                            $currentState = 'empty';   // Jarak > 8.0 cm = Tangki Surut
+                        } else {
+                            $currentState = 'filling'; // Jarak antara 4.6 cm - 8.0 cm = Sedang Mengisi
                         }
                         
-                        // Jika status tangki hari ini BERBEDA dengan status terakhir (Misal: dari kosong tiba-tiba penuh)
+                        // Jika status tangki BERBEDA dengan status terakhir (Misal: dari filling/empty -> full)
                         if ($currentState !== $lastState) {
                             $message = "";
                             // Rangkai kalimat notifikasi berdasarkan status baru
@@ -101,12 +106,13 @@ class MqttListenCommand extends Command
                                 $message = "✅ *Informasi Level Air* ✅\n\nTangki air sudah terisi penuh! Sistem pompa dihentikan secara otomatis.\n💧 *Total Air Masuk:* {$totalLitres} Liter.";
                             }
                             
-                            // Jika pesan sudah dirangkai, lakukan pengiriman
+                            // Jika pesan sudah dirangkai (empty atau full), lakukan pengiriman
                             if ($message !== "") {
                                 $this->sendTelegramMessage($message); // Panggil fungsi kirim telegram
-                                // Simpan status "Penuh/Kosong" saat ini ke memori selama 24 Jam agar pesan tidak diulang
-                                Cache::put('telegram_tank_state', $currentState, now()->addHours(24));
                             }
+                            
+                            // Simpan status saat ini ke memori cache
+                            Cache::put('telegram_tank_state', $currentState, now()->addHours(24));
                         }
                     }
                 } else {
@@ -140,11 +146,10 @@ class MqttListenCommand extends Command
         $url = "https://api.telegram.org/bot{$token}/sendMessage";
         
         try {
-            // Melakukan request (seakan kita mengakses link) secara POST menggunakan package HTTP Laravel
-            Http::post($url, [
+            Http::withoutVerifying()->post($url, [
                 'chat_id' => $chatId,
                 'text' => $message,
-                'parse_mode' => 'Markdown' // Mengizinkan kita memakai simbol * untuk teks tebal
+                'parse_mode' => 'Markdown'
             ]);
             $this->info("Telegram notification sent!"); // Notifikasi jika sukses dikirim
         } catch (\Exception $e) {

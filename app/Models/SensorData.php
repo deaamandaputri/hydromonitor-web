@@ -7,4 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 class SensorData extends Model
 {
     protected $guarded = [];
+
+    /**
+     * Relasi ke User (Belongs-To)
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

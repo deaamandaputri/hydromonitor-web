@@ -12,8 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('sensor_data', function (Blueprint $table) {
-            $table->string('pompa1_status', 10)->nullable(); // Max 10 chars
-            $table->string('pompa2_status', 10)->nullable(); // Max 10 chars
+            $table->foreignId('user_id')->nullable()->after('id')->constrained('users')->onDelete('cascade');
         });
     }
 
@@ -23,8 +22,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('sensor_data', function (Blueprint $table) {
-            $table->dropColumn('pompa1_status');
-            $table->dropColumn('pompa2_status');
+            $table->dropForeign(['user_id']);
+            $table->dropColumn('user_id');
         });
     }
 };

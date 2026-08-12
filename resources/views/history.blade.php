@@ -211,7 +211,7 @@
                                 <td>{{ $row->turbidity_voltage }} V</td>
                                 <td>
                                     @if($row->turbidity_voltage >= 2.00)
-                                        <span class="badge badge-mid">Tangki Kosong</span>
+                                        <span class="badge badge-clean">Air Sangat Jernih</span>
                                     @elseif($row->turbidity_voltage >= 1.61)
                                         <span class="badge badge-clean">Air Bersih</span>
                                     @else

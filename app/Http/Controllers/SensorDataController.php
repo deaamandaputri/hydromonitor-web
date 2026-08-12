@@ -11,6 +11,7 @@ class SensorDataController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
+            'user_id' => 'nullable|exists:users,id',
             'proximity' => 'nullable|numeric',
             'water_level_cm' => 'nullable|numeric',
             'water_level_percent' => 'nullable|numeric',
@@ -23,6 +24,10 @@ class SensorDataController extends Controller
             'pompa1_status' => 'nullable|string',
             'pompa2_status' => 'nullable|string',
         ]);
+
+        if (empty($data['user_id'])) {
+            $data['user_id'] = auth()->id() ?? 1;
+        }
 
         $sensorData = SensorData::create($data);
 
