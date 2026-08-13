@@ -681,10 +681,6 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div style="flex: 1; min-height: 0; width: 100%; position: relative; padding-top: 8px;">
-                            <canvas id="usageChart"></canvas>
-                        </div>
                     </aside>
                 </section>
 
@@ -1053,7 +1049,6 @@
 
         setInterval(fetchLatestData, 2000);
         fetchLatestData(); // First load
-        loadChart(); // Load chart once on page load
 
         // --- KONEKSI MQTT WEBSOCKET REAL-TIME (LANGSUNG DARI ESP32) ---
         try {
