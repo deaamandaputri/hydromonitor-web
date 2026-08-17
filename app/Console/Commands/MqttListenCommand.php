@@ -58,6 +58,7 @@ class MqttListenCommand extends Command
                 // Cek apakah datanya valid (berhasil diubah ke array)
                 if ($data && is_array($data)) {
                     // Masukkan (create) seluruh data sensor yang didapat ke dalam database tabel 'sensor_data'
+                    $cleanWaterStatus = isset($data['water_status']) ? str_replace(' (Standby)', '', $data['water_status']) : null;
                     SensorData::create([
                         'user_id' => $data['user_id'] ?? 1,
                         'proximity' => $data['proximity'] ?? null,
@@ -65,7 +66,7 @@ class MqttListenCommand extends Command
                         'water_level_percent' => $data['water_level_percent'] ?? null,
                         'turbidity_adc' => $data['turbidity_adc'] ?? null,
                         'turbidity_voltage' => $data['turbidity_voltage'] ?? null,
-                        'water_status' => $data['water_status'] ?? null,
+                        'water_status' => $cleanWaterStatus,
                         'flow_rate' => $data['flow_rate'] ?? null,
                         'total_litres' => $data['total_litres'] ?? null,
                         'pump_status' => $data['pump_status'] ?? null,
@@ -79,7 +80,7 @@ class MqttListenCommand extends Command
                     // Menggunakan Cache memori agar peringatan tidak dikirim berulang kali (Spamming)
                     // ==============================================================================
                     $proximity = $data['proximity'] ?? null;
-                    $waterStatus = $data['water_status'] ?? '';
+                    $waterStatus = $cleanWaterStatus ?? '';
 
                     if ($proximity !== null) {
                         // Mengambil status peringatan terakhir dari memori sistem (Cache), bawaannya 'normal'

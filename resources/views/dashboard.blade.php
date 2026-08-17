@@ -770,7 +770,8 @@
 
         function setQualityBadge(text, voltage) {
             const textBadge = document.getElementById('water-status-val');
-            textBadge.textContent = (text || 'Menganalisa').toString();
+            let cleanText = (text || 'Menganalisa').toString().replace(/\s*\(Standby\)/gi, '');
+            textBadge.textContent = cleanText;
             const upper = textBadge.textContent.toUpperCase();
 
             let textColor = '#16835f';
